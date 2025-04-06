@@ -525,11 +525,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/marcuspanozzo/fsharp/MusicPlayer/MusicPlayer.fsproj",
-      "projectName": "MusicPlayer",
-      "projectPath": "/Users/marcuspanozzo/fsharp/MusicPlayer/MusicPlayer.fsproj",
+      "projectUniqueName": "/Users/marcuspanozzo/fsharp/FSharpGame/FSharpGame.fsproj",
+      "projectName": "FSharpGame",
+      "projectPath": "/Users/marcuspanozzo/fsharp/FSharpGame/FSharpGame.fsproj",
       "packagesPath": "/Users/marcuspanozzo/.nuget/packages/",
-      "outputPath": "/Users/marcuspanozzo/fsharp/MusicPlayer/obj/",
+      "outputPath": "/Users/marcuspanozzo/fsharp/FSharpGame/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/marcuspanozzo/.nuget/NuGet/NuGet.Config"

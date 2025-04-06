@@ -1,4 +1,4 @@
-﻿module Program =
+﻿module Program
     open OpenTK
     open OpenTK.Graphics.OpenGL4
     open OpenTK.Windowing.Desktop
@@ -8,6 +8,7 @@
     open Microsoft.FSharp.Collections
     open Microsoft.FSharp.Control
     open System.Timers
+    open GameAudio
 
     let gwSettings = GameWindowSettings()
     
@@ -36,11 +37,12 @@
             this.Context.SwapBuffers()
             base.OnRenderFrame(e)
 
-    type AppState = {KeyStates: Map<string, bool>; Window: Window option}
+    type AppState = {KeyStates: Map<string, bool>; Window: Window option; AudioRef: AudioDevice option}
 
     let initialAppState = {
-        KeyStates = Map<string, bool> [for x in 'a' .. 'z'  -> (x.ToString(), false)]
+        KeyStates = Map<string, bool> [for x in 'a' .. 'z'  -> x.ToString(), false]
         Window = None
+        AudioRef = None
         }
 
     [<EntryPoint>]
@@ -55,11 +57,14 @@
                 let! msg = inbox.Receive()
 
                 match msg with 
-                | Initialize -> printfn "Initialized"
+                | Initialize ->
+                    let audioDevice = createAudioDevice
+                    if audioDevice <> None then
+                        return! messageLoop {KeyStates = appState.KeyStates; Window = appState.Window; AudioRef = audioDevice}
                 | RenderFrame -> ()
-                | Tick -> printfn "Tick"
-                | KeyDown x -> printfn "Key is pressed: %s" x; return! messageLoop {KeyStates = appState.KeyStates.Add(x, true); Window = appState.Window}
-                | KeyUp x -> printfn "Key if released %s" x; return! messageLoop {KeyStates = appState.KeyStates.Add(x, false); Window = appState.Window}
+                | Tick -> printfn "Tick"; generateTone (appState.AudioRef, 261.6, 0.5)
+                | KeyDown x -> printfn "Key is pressed: %s" x; return! messageLoop {KeyStates = appState.KeyStates.Add(x, true); Window = appState.Window; AudioRef = appState.AudioRef}
+                | KeyUp x -> printfn "Key if released %s" x; return! messageLoop {KeyStates = appState.KeyStates.Add(x, false); Window = appState.Window; AudioRef = appState.AudioRef}
                 | CloseApp -> window.Close(); timer.Stop()
                 | Logic -> ()
                 | _ -> printfn "received bad msg: %s" (msg.ToString())
@@ -81,9 +86,4 @@
         keyUpAction |> window.add_KeyUp
         timer.Start()
         window.Run()
-
-        
-        
-
         0
-        
