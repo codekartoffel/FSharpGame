@@ -1,5 +1,4 @@
 ﻿module Program
-    open OpenTK
     open OpenTK.Graphics.OpenGL4
     open OpenTK.Windowing.Desktop
     open OpenTK.Mathematics
@@ -48,9 +47,7 @@
     [<EntryPoint>]
     let main args = 
         use window = new Window(640, 480, "Example Window")
-        
         use timer = new Timer 1000;
-        
 
         let printerAgent = MailboxProcessor.Start(fun inbox -> 
             let rec messageLoop(appState: AppState) = async {
@@ -62,7 +59,7 @@
                     if audioDevice <> None then
                         return! messageLoop {KeyStates = appState.KeyStates; Window = appState.Window; AudioRef = audioDevice}
                 | RenderFrame -> ()
-                | Tick -> printfn "Tick"; generateTone (appState.AudioRef, 261.6, 0.5)
+                | Tick -> printfn "Tick"; generateTone (appState.AudioRef, 180, 100)
                 | KeyDown x -> printfn "Key is pressed: %s" x; return! messageLoop {KeyStates = appState.KeyStates.Add(x, true); Window = appState.Window; AudioRef = appState.AudioRef}
                 | KeyUp x -> printfn "Key if released %s" x; return! messageLoop {KeyStates = appState.KeyStates.Add(x, false); Window = appState.Window; AudioRef = appState.AudioRef}
                 | CloseApp -> window.Close(); timer.Stop()

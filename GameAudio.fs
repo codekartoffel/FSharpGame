@@ -2,15 +2,16 @@ module GameAudio
     open OpenTK.Audio
     open OpenTK.Audio.OpenAL
     open System
+    open System.Threading
     type AudioDevice = {Device: ALDevice; Context: ALContext}
+
+    type AudioPlayback = {ALSource: int; ALBuffer: int}
 
     let createAudioDevice: AudioDevice option = 
         try
-            let device = ALC.OpenDevice null 
-            let attributes = new ALContextAttributes()
-            let context = ALC.CreateContext(device, attributes)
+            let device = ALC.OpenDevice null
+            let context = ALC.CreateContext(device, [||])
             ALC.MakeContextCurrent context |> ignore
-
             Some {Device = device; Context = context}
         with e ->
             printfn "Could not create audio device: %s" e.Message
@@ -21,16 +22,15 @@ module GameAudio
 
     let private generateWave (freq: float, duration: float) =
         let sampleFreq = 44100.
-        let freq = 440.
         let output = List.init (sampleFreq * duration |> int) (fun i -> 
                                             2.0 * Math.PI * freq / sampleFreq * float i
                                             |> Math.Sin
-                                            |> ( * )  (float Int16.MaxValue)
-                                            |> int16
+                                            |> ( * )  (float 127)
+                                            |> byte
                                             )
         output |> Array.ofList
 
-    let generateTone (device: AudioDevice option, toneFreq: float, duration: float) =
+    let generateTone (device: AudioDevice option, toneFreq: float, duration: float): AudioPlayback option =
         if device <> None then
             let mutable source: int = 0
             let mutable buffer: int = 0
@@ -38,18 +38,27 @@ module GameAudio
             AL.GenBuffers(1, &buffer)
             AL.GenSources(1, &source)
 
-            let waveData = generateWave (toneFreq, duration) // C-4 (261.6, 0.5)
-            
-            AL.BufferData(buffer, ALFormat.Mono16 ,&waveData[0], waveData.Length * 2, int 44100)
+            let mutable waveData = generateWave (toneFreq, duration) // C-4 (261.6, 0.5)
+            printfn "Data: %A" waveData
+            AL.BufferData(buffer, ALFormat.Mono8, &waveData[0], waveData.Length, int 44100)
             AL.Source(source, ALSourcei.Buffer, buffer)
+            AL.Source(source, ALSourceb.Looping, false)
+
             AL.SourcePlay source
 
             let error = AL.GetError()
             if error <> ALError.NoError then
                 printfn "Audio error: %s" (error.ToString())
+            // AL.DeleteBuffer buffer
+            // AL.DeleteSource source
+            
+            let timeEvent = new AutoResetEvent(false)
+            let timer = new Timers.Timer 2000.0
+            timer.Elapsed.AddHandler
 
-            AL.DeleteBuffer buffer
-            AL.DeleteSource source
+            Some {ALSource = source; ALBuffer = buffer}
+        else
+            None
 
 
     let disposeAudioDevice (device: AudioDevice option) =
